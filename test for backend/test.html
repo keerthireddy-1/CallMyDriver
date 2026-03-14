@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CallMyDriver Pro | Rider Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f8f9fa; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
+        #map { height: 450px; width: 100%; border-radius: 15px; margin-top: 20px; border: 1px solid #eee; }
+        .btn-main { background: #2ecc71; color: white; padding: 16px; border: none; border-radius: 10px; cursor: pointer; font-size: 18px; font-weight: 600; width: 100%; transition: 0.2s; }
+        .btn-main:hover { background: #27ae60; transform: translateY(-1px); }
+        .info-panel { margin-top: 20px; padding: 15px; border-radius: 10px; background: #f1f8f4; border-left: 5px solid #2ecc71; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚀 CallMyDriver Pro</h2>
+    <p>Pickup Location: <b>12.9716, 77.5946 (Bengaluru)</b></p>
+    
+    <button class="btn-main" onclick="bookRide()">Find Nearest Driver & Start Tracking</button>
+
+    <div id="status-panel" class="info-panel">
+        <div id="status-text">Searching...</div>
+        <div id="booking-details" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
+    </div>
+
+    <div id="map"></div>
+</div>
+
+<script>
+    let map, carMarker, ws;
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    // Setup Map
+    map = L.map('map').setView([12.9716, 77.5946], 14);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+    L.circleMarker([12.9716, 77.5946], {color: '#3498db', radius: 8}).addTo(map);
+
+    async function bookRide() {
+        const panel = document.getElementById('status-panel');
+        const text = document.getElementById('status-text');
+        const details = document.getElementById('booking-details');
+
+        panel.style.display = 'block';
+        text.innerHTML = "<b>Status:</b> AI Matcher searching for driver...";
+
+        try {
+            const response = await fetch(`${API_BASE}/bookings/book`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    user_id: "TEST_USER_01",
+                    pickup_lat: 12.9716,
+                    pickup_lng: 77.5946,
+                    destination: "Indiranagar"
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail);
+
+            text.innerHTML = `<b>Matched with:</b> ${data.driver_name} ✅`;
+            details.innerHTML = `ID: ${data.booking_id} | Distance: ${data.distance} km <br><small>Waiting for driver to accept ride...</small>`;
+
+            startTracking(data.booking_id, data.driver_name);
+
+        } catch (err) {
+            text.innerHTML = `<span style="color:red">Error: ${err.message}</span>`;
+        }
+    }
+
+    function startTracking(bId, dName) {
+        if (ws) ws.close();
+        ws = new WebSocket(`ws://127.0.0.1:8000/api/tracking/${bId}/user/TEST_USER_01`);
+
+        ws.onmessage = (event) => {
+            const gps = JSON.parse(event.data);
+            if (gps.lat && gps.lng) {
+                const pos = [gps.lat, gps.lng];
+                if (!carMarker) {
+                    carMarker = L.marker(pos).addTo(map).bindPopup(`<b>${dName}</b>`).openPopup();
+                } else {
+                    carMarker.setLatLng(pos);
+                }
+                map.panTo(pos);
+            }
+        };
+    }
+</script>
+
+</body>
+</html>

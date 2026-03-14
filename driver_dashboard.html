@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Driver Dashboard | CallMyDriver</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #2c3e50; color: white; }
+        .card { background: #34495e; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; }
+        .btn { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .accept { background: #27ae60; color: white; }
+        .reject { background: #e74c3c; color: white; }
+        #request-panel { display: none; margin-top: 20px; border-top: 1px solid #5d6d7e; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🚖 Driver Console</h2>
+        <div id="login-section">
+            <input type="text" id="driver-name" placeholder="Enter Name" style="width:90%; padding:10px; margin-bottom:10px;">
+            <button class="btn" style="background:#3498db; color:white;" onclick="login()">Go Online</button>
+        </div>
+
+        <div id="request-panel">
+            <h3 style="color:#f1c40f;">New Ride Request!</h3>
+            <p id="booking-id-display">ID: ---</p>
+            <button class="btn accept" onclick="respond('accept')">ACCEPT RIDE</button>
+            <button class="btn reject" onclick="respond('reject')">REJECT RIDE</button>
+        </div>
+    </div>
+
+    <script>
+        let currentBookingId = "";
+
+        async function login() {
+            const name = document.getElementById('driver-name').value;
+            const res = await fetch('http://127.0.0.1:8000/api/auth/driver-login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name, phone: "999", license_number: "VERIFIED-001"})
+            });
+            const data = await res.json();
+            alert("Online! Driver ID: " + data.driver_id);
+            // In a real app, the driver would now wait for a WebSocket signal.
+            // For now, manually enter a Booking ID to simulate the request:
+            document.getElementById('request-panel').style.display = 'block';
+        }
+
+        async function respond(action) {
+            const bId = prompt("Enter Booking ID to " + action + ":");
+            const res = await fetch(`http://127.0.0.1:8000/api/bookings/${bId}/respond?action=${action}`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            alert(data.message);
+        }
+    </script>
+</body>
+</html>
