@@ -1,28 +1,38 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { bookDriver } from '../services/api';
 import '../styles/booking.css';
 
 const vehicleOptions = [
   { id: 'bike', icon: '🛵', name: 'Bike / Scooter', time: '5 min', price: '₹80–120', tag: 'Popular' },
-  { id: 'car', icon: '🚗', name: 'Car', time: '8 min', price: '₹150–220', tag: null },
-  { id: 'suv', icon: '🚙', name: 'SUV / Big Car', time: '10 min', price: '₹220–300', tag: null },
+  { id: 'car',  icon: '🚗', name: 'Car',            time: '8 min', price: '₹150–220', tag: null },
+  { id: 'suv',  icon: '🚙', name: 'SUV / Big Car',  time: '10 min', price: '₹220–300', tag: null },
 ];
 
 export default function BookingPage() {
-  const [currentLocation, setCurrentLocation] = useState('');
-  const [destination, setDestination] = useState('');
-  const [selected, setSelected] = useState('bike');
-  const [loading, setLoading] = useState(false);
+  const [pickup, setPickup]       = useState('');
+  const [destination, setDest]    = useState('');
+  const [selected, setSelected]   = useState('bike');
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
   const navigate = useNavigate();
 
-  const handleBook = () => {
-    if (!currentLocation || !destination) return alert('Please enter your current location and destination!');
+  const handleBook = async () => {
+    if (!pickup || !destination) return setError('Please enter both pickup and destination!');
     setLoading(true);
-    // TODO: POST /book-driver
-    setTimeout(() => {
-      setLoading(false);
+    setError('');
+    try {
+      const user_id = localStorage.getItem('user_id') || 'guest';
+      // Using fixed coords for now — swap with real GPS later
+      const res = await bookDriver(user_id, 12.9716, 77.5946, destination);
+      // Save booking id for tracking
+      localStorage.setItem('booking_id', res.data.booking_id);
       navigate('/track');
-    }, 1500);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'No drivers available right now. Try again!');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -32,7 +42,6 @@ export default function BookingPage() {
         <h2>Call a Driver</h2>
       </div>
 
-      {/* Info banner */}
       <div className="info-banner">
         🔑 Our driver will come to <strong>your location</strong> and drive <strong>your vehicle</strong> to the destination.
       </div>
@@ -41,8 +50,8 @@ export default function BookingPage() {
         <div className="loc-input">
           <span className="dot green" />
           <input
-            value={currentLocation}
-            onChange={e => setCurrentLocation(e.target.value)}
+            value={pickup}
+            onChange={e => setPickup(e.target.value)}
             placeholder="Where is your vehicle right now?"
           />
         </div>
@@ -51,7 +60,7 @@ export default function BookingPage() {
           <span className="dot red" />
           <input
             value={destination}
-            onChange={e => setDestination(e.target.value)}
+            onChange={e => setDest(e.target.value)}
             placeholder="Where should driver take it?"
           />
         </div>
@@ -74,6 +83,8 @@ export default function BookingPage() {
           </div>
         ))}
       </div>
+
+      {error && <p style={{ color: '#ff4466', padding: '0 20px', fontSize: '0.85rem' }}>⚠️ {error}</p>}
 
       <div className="booking-footer">
         <button className="btn-book" onClick={handleBook} disabled={loading}>

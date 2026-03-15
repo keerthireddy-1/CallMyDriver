@@ -1,17 +1,30 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { register } from '../services/api';
 import '../styles/auth.css';
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
+  const [form, setForm] = useState({ username: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: POST /register
-    navigate('/verify-otp', { state: { phone: form.phone } });
+    setLoading(true);
+    setError('');
+    try {
+      await register(form.username, form.password);
+      // after register go to home directly (no OTP in backend yet)
+      localStorage.setItem('user_id', form.username);
+      navigate('/home');
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Registration failed. Try a different username.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -24,29 +37,38 @@ export default function RegisterPage() {
         <p className="auth-subtitle">Join the ride.</p>
 
         <form onSubmit={handleSubmit} className="auth-form">
-          {[
-            { label: 'Full Name', name: 'name', type: 'text', placeholder: 'John Doe' },
-            { label: 'Email', name: 'email', type: 'email', placeholder: 'you@email.com' },
-            { label: 'Phone', name: 'phone', type: 'tel', placeholder: '+91 9999999999' },
-            { label: 'Password', name: 'password', type: 'password', placeholder: '••••••••' },
-          ].map(({ label, name, type, placeholder }) => (
-            <div className="input-group" key={name}>
-              <label>{label}</label>
-              <input
-                type={type}
-                name={name}
-                value={form[name]}
-                onChange={handleChange}
-                placeholder={placeholder}
-                required
-              />
-            </div>
-          ))}
-          <button type="submit" className="btn-primary">Register →</button>
+          <div className="input-group">
+            <label>Username</label>
+            <input
+              type="text"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              placeholder="choose a username"
+              required
+            />
+          </div>
+          <div className="input-group">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          {error && <p className="auth-error">⚠️ {error}</p>}
+
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Creating account...' : 'Register →'}
+          </button>
         </form>
 
         <p className="auth-switch">
-           Already have an account? <Link to="/login">Login</Link>
+          Already have an account? <Link to="/login">Login</Link>
         </p>
       </div>
     </div>
