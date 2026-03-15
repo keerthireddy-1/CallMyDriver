@@ -2,42 +2,34 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/auth.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = 'http://127.0.0.1:8000';
 
 export default function LoginPage() {
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      // Step 1 — Login
-      const res = await fetch(`${API_URL}/api/auth/login?email=${form.email}&password=${form.password}`, {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: form.username, password: form.password }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.detail || 'Login failed.');
+        setError(data.detail || 'Login failed. Check your credentials.');
         setLoading(false);
         return;
       }
-
-      // Step 2 — Send OTP to email
-      await fetch(`${API_URL}/api/auth/send-otp?phone=${form.email}`, {
-        method: 'POST',
-      });
-
-      // Step 3 — Go to OTP page, pass email
-      navigate('/verify-otp', { state: { email: form.email } });
-
+      localStorage.setItem('user_id', data.user_id);
+      navigate('/home');
     } catch (err) {
       setError('Could not connect to server. Try again.');
     } finally {
@@ -56,13 +48,13 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">
-            <label>Email</label>
+            <label>Username</label>
             <input
-              type="email"
-              name="email"
-              value={form.email}
+              type="text"
+              name="username"
+              value={form.username}
               onChange={handleChange}
-              placeholder="you@email.com"
+              placeholder="your username"
               required
             />
           </div>
@@ -77,7 +69,9 @@ export default function LoginPage() {
               required
             />
           </div>
-          {error && <p style={{color:'red', fontSize:'13px'}}>{error}</p>}
+
+          {error && <p className="auth-error">⚠️ {error}</p>}
+
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Logging in...' : 'Login →'}
           </button>
