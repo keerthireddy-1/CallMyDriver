@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/auth.css';
 
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ username: '', email: '', phone: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -17,24 +17,20 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
     try {
-      // Step 1 - Register
       const res = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: form.username, password: form.password }),
+        body: JSON.stringify(form),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.detail || 'Registration failed.');
+        setError(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
         return;
       }
-      // Step 2 - Send OTP
-      await fetch(`${API_URL}/api/auth/send-otp?phone=${form.phone}`, {
+      await fetch(`${API_URL}/api/auth/send-otp?phone=${form.email}`, {
         method: 'POST',
       });
-      localStorage.setItem('user_id', form.username);
-      // Step 3 - Go to OTP page
-      navigate('/verify-otp', { state: { phone: form.phone } });
+      navigate('/verify-otp', { state: { email: form.email } });
     } catch (err) {
       setError('Cannot connect to server.');
     } finally {
@@ -52,20 +48,14 @@ export default function RegisterPage() {
         <p className="auth-subtitle">Join the ride.</p>
         <form onSubmit={handleSubmit} className="auth-form">
           {[
-            { label: 'Username', name: 'username', type: 'text', placeholder: 'choose a username' },
+            { label: 'Full Name', name: 'name', type: 'text', placeholder: 'John Doe' },
+            { label: 'Email', name: 'email', type: 'email', placeholder: 'you@email.com' },
             { label: 'Phone', name: 'phone', type: 'tel', placeholder: '+91 9999999999' },
             { label: 'Password', name: 'password', type: 'password', placeholder: '••••••••' },
           ].map(({ label, name, type, placeholder }) => (
             <div className="input-group" key={name}>
               <label>{label}</label>
-              <input
-                type={type}
-                name={name}
-                value={form[name]}
-                onChange={handleChange}
-                placeholder={placeholder}
-                required
-              />
+              <input type={type} name={name} value={form[name]} onChange={handleChange} placeholder={placeholder} required />
             </div>
           ))}
           {error && <p className="auth-error">⚠️ {error}</p>}
