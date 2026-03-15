@@ -53,7 +53,7 @@ export default function OtpPage() {
         setVerified(true);
         setTimeout(() => navigate('/home'), 1500);
       }
-    } catch (err) {
+    } catch  {
       setError('Could not connect to server. Try again.');
     } finally {
       setLoading(false);
@@ -69,7 +69,7 @@ export default function OtpPage() {
       await fetch(`${API_URL}/api/auth/send-otp?phone=${email}`, {
         method: 'POST',
       });
-    } catch (err) {
+    } catch{
       setError('Could not resend OTP. Try again.');
     }
   };

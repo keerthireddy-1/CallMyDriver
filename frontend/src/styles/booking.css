@@ -147,3 +147,24 @@
   bottom: 0;
   border-top: 1px solid #1e2a10;
 }
+
+
+.location-dropdown li {
+  padding: 12px 16px;
+  cursor: pointer;
+  text-align: left; /* Aligns text to the left for a cleaner look */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* The sleek, soft white border */
+  color: #fff;
+  transition: background-color 0.2s ease, padding-left 0.2s ease; 
+}
+
+/* Removes the white line from the very last item so it sits flush */
+.location-dropdown li:last-child {
+  border-bottom: none;
+}
+
+/* Adds a really cool "indent" effect when the user hovers over a place */
+.location-dropdown li:hover {
+  background-color: #2a2a2a;
+  padding-left: 22px; 
+}
