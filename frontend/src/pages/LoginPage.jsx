@@ -2,59 +2,44 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/auth.css';
 
-const API_URL = 'http://127.0.0.1:8000';
-
 export default function LoginPage() {
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: form.username, password: form.password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.detail || 'Login failed. Check your credentials.');
-        setLoading(false);
-        return;
-      }
-      localStorage.setItem('user_id', data.user_id);
-      navigate('/home');
-    } catch (err) {
-      setError('Could not connect to server. Try again.');
-    } finally {
+    // TODO: Replace with real API call → POST /login
+    // const res = await axios.post('/api/login', form);
+    setTimeout(() => {
       setLoading(false);
-    }
+      navigate('/home');
+    }, 1000);
   };
 
   return (
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-logo">
-          <span className="logo-icon">🔑</span>
+          <span className="logo-icon">🛵</span>
           <h1>CallMyDriver</h1>
         </div>
-        <p className="auth-subtitle">Your vehicle. Our driver. Your safety.</p>
+        <p className="auth-subtitle">Your city, on demand.</p>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">
-            <label>Username</label>
+            <label>Email</label>
             <input
-              type="text"
-              name="username"
-              value={form.username}
+              type="email"
+              name="email"
+              value={form.email}
               onChange={handleChange}
-              placeholder="your username"
+              placeholder="you@email.com"
               required
             />
           </div>
@@ -69,9 +54,6 @@ export default function LoginPage() {
               required
             />
           </div>
-
-          {error && <p className="auth-error">⚠️ {error}</p>}
-
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Logging in...' : 'Login →'}
           </button>

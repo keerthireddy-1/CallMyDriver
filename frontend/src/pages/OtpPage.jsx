@@ -2,19 +2,18 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/otp.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
 export default function OtpPage() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(30);
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const inputs = useRef([]);
   const navigate = useNavigate();
   const location = useLocation();
-  const email = location.state?.email || '';
+  const phone = location.state?.phone || '+91 XXXXXXXX89';
 
+  // Countdown timer
   useEffect(() => {
     if (timer === 0) return;
     const t = setTimeout(() => setTimer(s => s - 1), 1000);
@@ -36,47 +35,30 @@ export default function OtpPage() {
     }
   };
 
-  const handleVerify = async () => {
+  const handleVerify = () => {
     const code = otp.join('');
     if (code.length < 6) return setError('Please enter the complete 6-digit OTP');
     setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${API_URL}/api/auth/verify-otp?phone=${email}&otp=${code}`, {
-        method: 'POST',
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.detail || 'Verification failed.');
-      } else {
-        if (data.token) localStorage.setItem('token', data.token);
-        setVerified(true);
-        setTimeout(() => navigate('/home'), 1500);
-      }
-    } catch (err) {
-      setError('Could not connect to server. Try again.');
-    } finally {
+    // TODO: POST /verify-otp with { phone, otp: code }
+    setTimeout(() => {
       setLoading(false);
-    }
+      setVerified(true);
+      setTimeout(() => navigate('/home'), 1500);
+    }, 1200);
   };
 
-  const handleResend = async () => {
-    setTimer(60);
+  const handleResend = () => {
+    setTimer(30);
     setOtp(['', '', '', '', '', '']);
     setError('');
     inputs.current[0]?.focus();
-    try {
-      await fetch(`${API_URL}/api/auth/send-otp?phone=${email}`, {
-        method: 'POST',
-      });
-    } catch (err) {
-      setError('Could not resend OTP. Try again.');
-    }
+    // TODO: POST /resend-otp
   };
 
   return (
     <div className="otp-container">
       <div className="otp-card">
+        {/* Cyber corner decorations */}
         <div className="corner tl" /><div className="corner tr" />
         <div className="corner bl" /><div className="corner br" />
 
@@ -91,7 +73,7 @@ export default function OtpPage() {
 
             <h2>Verify Your Identity</h2>
             <p className="otp-sub">
-              OTP sent to <span className="phone-highlight">{email}</span>
+              OTP sent to <span className="phone-highlight">{phone}</span>
             </p>
 
             <div className="otp-inputs">
@@ -134,7 +116,7 @@ export default function OtpPage() {
               )}
             </div>
 
-            <p className="otp-note">🔒 This OTP expires in 60 seconds</p>
+            <p className="otp-note">🔒 This OTP expires in 10 minutes</p>
           </>
         ) : (
           <div className="verified-state">

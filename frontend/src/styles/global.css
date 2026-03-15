@@ -10,27 +10,33 @@ body {
 }
 
 :root {
-  --cmd-blue: #FFD600;        /* yellow as primary accent */
-  --cmd-blue-dim: #b39800;
-  --cmd-dark: #050a0a;        /* slightly warm dark */
-  --cmd-card: #0d1208;        /* dark with warm tint */
-  --cmd-card2: #0a0f05;
-  --cmd-border: #2a2a00;      /* dark yellow border */
-  --cmd-border-bright: #FFD60044;
-  --cmd-text-muted: #6a7a4a;
+  --cmd-blue: #00d4ff;
+  --cmd-blue-dim: #0088aa;
+  --cmd-dark: #050a14;
+  --cmd-card: #0d1a2a;
+  --cmd-card2: #0a1520;
+  --cmd-border: #1a3044;
+  --cmd-border-bright: #00d4ff44;
+  --cmd-text-muted: #5a7a9a;
   --cmd-green: #00ff88;
   --cmd-red: #ff4466;
-  --cmd-yellow: #FFD600;
+  --cmd-yellow: #ffd600;
 }
+
 input, button { font-family: 'Inter', sans-serif; }
 
 /* Cyber scanline effect on body */
 body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
   background: repeating-linear-gradient(
     0deg,
     transparent,
     transparent 2px,
-    rgba(255, 214, 0, 0.012) 2px,   /* yellow scanlines */
-    rgba(255, 214, 0, 0.012) 4px
+    rgba(0, 212, 255, 0.015) 2px,
+    rgba(0, 212, 255, 0.015) 4px
   );
+  pointer-events: none;
+  z-index: 9999;
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/home.css';
 
@@ -5,39 +6,40 @@ const services = [
   { icon: '🛵', label: 'Scooter/Bike', desc: 'Driver rides your two-wheeler' },
   { icon: '🚗', label: 'Car', desc: 'Driver drives your car' },
   { icon: '🍺', label: 'Drunk? Safe ride', desc: 'We get you & your vehicle home' },
-  { icon: '🤕', label: 'Can\'t drive?', desc: 'Injured or unwell? We help' },
+  { icon: '🤕', label: "Can't drive?", desc: 'Injured or unwell? We help' },
 ];
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [activeVehicle, setActiveVehicle] = useState(0);
 
   return (
     <div className="home-container">
       <header className="home-header">
         <div className="header-logo">🔑 <span>CallMyDriver</span></div>
-        <div className="header-profile">👤
-          {/* Add this just before the closing </div> of home-container */}
-          <nav className="bottom-nav">
-            <div className="nav-item active">
-              <span>🏠</span><span>HOME</span>
-            </div>
-            <div className="nav-item" onClick={() => navigate('/book')}>
-              <span>🔑</span><span>BOOK</span>
-            </div>
-            <div className="nav-item">
-              <span>📋</span><span>RIDES</span>
-            </div>
-            <div className="nav-item">
-              <span>👤</span><span>PROFILE</span>
-            </div>
-          </nav>
-        </div>
+        <div className="header-profile">👤</div>
       </header>
 
       <section className="home-hero">
         <p className="home-greeting">Your vehicle. Our driver. 🔑</p>
         <h2>Can't drive right now?<br /><span>We've got you covered.</span></h2>
         <p className="hero-desc">We send a driver to your location — they drive YOUR vehicle home safely.</p>
+
+        <div className="service-toggle">
+          <div
+            className={`toggle-option ${activeVehicle === 0 ? 'active-toggle' : ''}`}
+            onClick={() => setActiveVehicle(0)}
+          >
+            🛵 Two Wheeler
+          </div>
+          <div
+            className={`toggle-option ${activeVehicle === 1 ? 'active-toggle' : ''}`}
+            onClick={() => setActiveVehicle(1)}
+          >
+            🚗 Four Wheeler
+          </div>
+        </div>
+
         <button className="hero-cta" onClick={() => navigate('/book')}>
           📍 Call a Driver Now
         </button>
@@ -78,7 +80,21 @@ export default function HomePage() {
           <button onClick={() => navigate('/book')}>Rebook</button>
         </div>
       </section>
-    </div>
 
+      <nav className="bottom-nav">
+        <div className="nav-item active">
+          <span>🏠</span><span>HOME</span>
+        </div>
+        <div className="nav-item" onClick={() => navigate('/book')}>
+          <span>🔑</span><span>BOOK</span>
+        </div>
+        <div className="nav-item">
+          <span>📋</span><span>RIDES</span>
+        </div>
+        <div className="nav-item">
+          <span>👤</span><span>PROFILE</span>
+        </div>
+      </nav>
+    </div>
   );
 }
