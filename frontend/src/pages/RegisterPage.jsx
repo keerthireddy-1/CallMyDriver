@@ -2,16 +2,41 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/auth.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: POST /register
-    navigate('/verify-otp', { state: { phone: form.phone } });
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.detail || 'Registration failed.');
+        setLoading(false);
+        return;
+      }
+      await fetch(`${API_URL}/api/auth/send-otp?phone=${form.email}`, {
+        method: 'POST',
+      });
+      navigate('/verify-otp', { state: { email: form.email } });
+    } catch (err) {
+      setError('Could not connect to server. Try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -22,7 +47,6 @@ export default function RegisterPage() {
           <h1>CallMyDriver</h1>
         </div>
         <p className="auth-subtitle">Join the ride.</p>
-
         <form onSubmit={handleSubmit} className="auth-form">
           {[
             { label: 'Full Name', name: 'name', type: 'text', placeholder: 'John Doe' },
@@ -32,22 +56,15 @@ export default function RegisterPage() {
           ].map(({ label, name, type, placeholder }) => (
             <div className="input-group" key={name}>
               <label>{label}</label>
-              <input
-                type={type}
-                name={name}
-                value={form[name]}
-                onChange={handleChange}
-                placeholder={placeholder}
-                required
-              />
+              <input type={type} name={name} value={form[name]} onChange={handleChange} placeholder={placeholder} required />
             </div>
           ))}
-          <button type="submit" className="btn-primary">Register →</button>
+          {error && <p style={{color:'red', fontSize:'13px'}}>{error}</p>}
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Registering...' : 'Register →'}
+          </button>
         </form>
-
-        <p className="auth-switch">
-           Already have an account? <Link to="/login">Login</Link>
-        </p>
+        <p className="auth-switch">Already have an account? <Link to="/login">Login</Link></p>
       </div>
     </div>
   );
