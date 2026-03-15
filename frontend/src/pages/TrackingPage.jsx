@@ -2,29 +2,35 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/tracking.css';
 
+const STEPS = [
+  'Finding a driver near you...',
+  'Driver assigned – Ramesh K. ✓',
+  'Driver is on the way to your vehicle (1.4 km)',
+  'Driver reached your vehicle 📍',
+  'En route to your destination 🏠',
+  'Arrived safely! Trip complete ✅',
+];
+
+const stepsLength = STEPS.length;
+
 export default function TrackingPage() {
   const [status, setStatus] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState('Just now');
   const navigate = useNavigate();
 
-  const steps = [
-    'Finding a driver near you...',
-    'Driver assigned – Ramesh K. ✓',
-    'Driver is on the way to your vehicle (1.4 km)',
-    'Driver reached your vehicle 📍',
-    'En route to your destination 🏠',
-    'Arrived safely! Trip complete ✅',
-  ];
+  useEffect(() => {
+    if (status >= stepsLength - 1) return;
+    const timer = setTimeout(() => {
+      setStatus((prev) => prev + 1);
+      setLastUpdated(new Date().toLocaleTimeString());
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [status]);
 
-  // REMOVE the old useEffect entirely
-// Status will be updated via API polling (TODO when backend is ready)
+  const refreshStatus = () => {
+    setLastUpdated(new Date().toLocaleTimeString());
+  };
 
-// Add this instead — manual refresh button for now
-const [lastUpdated, setLastUpdated] = useState('Just now');
-
-const refreshStatus = () => {
-  // TODO: GET /bookings/:id/status  → update status from response
-  setLastUpdated(new Date().toLocaleTimeString());
-};
   return (
     <div className="tracking-container">
       <div className="tracking-header">
@@ -49,14 +55,16 @@ const refreshStatus = () => {
           <div className="driver-rating">🔑 Driver</div>
         </div>
 
-        {/* Vehicle reminder */}
         <div className="vehicle-reminder">
-          🚗 Your Car · KA 05 MN 7890 · Phoenix Mall P2
+          🚗 Your Car · KA 05 MN 7890
         </div>
 
         <div className="status-timeline">
-          {steps.map((step, i) => (
-            <div key={i} className={`status-step ${i <= status ? 'done' : ''} ${i === status ? 'active' : ''}`}>
+          {STEPS.map((step, i) => (
+            <div
+              key={i}
+              className={`status-step ${i <= status ? 'done' : ''} ${i === status ? 'active' : ''}`}
+            >
               <div className="status-dot" />
               <p>{step}</p>
             </div>
@@ -66,10 +74,12 @@ const refreshStatus = () => {
         <div className="tracking-actions">
           <button className="action-btn">📞 Call Driver</button>
           <button className="action-btn">💬 Message</button>
-          <button className="action-btn danger" onClick={() => navigate('/home')}>❌ Cancel</button>
+          <button className="action-btn danger" onClick={() => navigate('/home')}>
+            ❌ Cancel
+          </button>
           <button className="refresh-btn" onClick={refreshStatus}>
-  ↻ Refresh Status · {lastUpdated}
-</button>
+            ↻ Refresh Status · {lastUpdated}
+          </button>
         </div>
       </div>
     </div>
