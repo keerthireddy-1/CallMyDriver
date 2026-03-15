@@ -156,3 +156,17 @@
   transition: border-color 0.2s, color 0.2s;
 }
 .refresh-btn:hover { border-color: var(--cmd-blue); color: var(--cmd-blue); }
+.refresh-btn {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--cmd-border);
+  color: var(--cmd-text-muted);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 14px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.refresh-btn:hover { border-color: var(--cmd-blue); color: var(--cmd-blue); }

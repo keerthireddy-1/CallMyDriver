@@ -13,7 +13,7 @@ export default function OtpPage() {
   const inputs = useRef([]);
   const navigate = useNavigate();
   const location = useLocation();
-  const email = location.state?.email || '';
+  const email = location.state?.email || location.state?.phone || '';
 
   useEffect(() => {
     if (timer === 0) return;
@@ -53,7 +53,7 @@ export default function OtpPage() {
         setVerified(true);
         setTimeout(() => navigate('/home'), 1500);
       }
-    } catch  {
+    } catch (err) {
       setError('Could not connect to server. Try again.');
     } finally {
       setLoading(false);
@@ -66,11 +66,9 @@ export default function OtpPage() {
     setError('');
     inputs.current[0]?.focus();
     try {
-      await fetch(`${API_URL}/api/auth/send-otp?phone=${email}`, {
-        method: 'POST',
-      });
-    } catch{
-      setError('Could not resend OTP. Try again.');
+      await fetch(`${API_URL}/api/auth/send-otp?phone=${email}`, { method: 'POST' });
+    } catch (err) {
+      setError('Could not resend OTP.');
     }
   };
 
@@ -79,53 +77,28 @@ export default function OtpPage() {
       <div className="otp-card">
         <div className="corner tl" /><div className="corner tr" />
         <div className="corner bl" /><div className="corner br" />
-
         <div className="otp-logo">🔑 <span>Call<strong>My</strong>Driver</span></div>
-
         {!verified ? (
           <>
             <div className="otp-icon-wrap">
               <div className="otp-shield">🛡️</div>
               <div className="otp-ring" />
             </div>
-
             <h2>Verify Your Identity</h2>
-            <p className="otp-sub">
-              OTP sent to <span className="phone-highlight">{email}</span>
-            </p>
-
+            <p className="otp-sub">OTP sent to <span className="phone-highlight">{email}</span></p>
             <div className="otp-inputs">
               {otp.map((digit, i) => (
-                <input
-                  key={i}
-                  ref={el => inputs.current[i] = el}
+                <input key={i} ref={el => inputs.current[i] = el}
                   className={`otp-box ${digit ? 'filled' : ''} ${error ? 'shake' : ''}`}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
+                  type="text" inputMode="numeric" maxLength={1} value={digit}
                   onChange={e => handleChange(e.target.value, i)}
-                  onKeyDown={e => handleKeyDown(e, i)}
-                  autoFocus={i === 0}
-                />
+                  onKeyDown={e => handleKeyDown(e, i)} autoFocus={i === 0} />
               ))}
             </div>
-
             {error && <p className="otp-error">⚠️ {error}</p>}
-
-            <button
-              className="btn-verify"
-              onClick={handleVerify}
-              disabled={loading || otp.join('').length < 6}
-            >
-              {loading ? (
-                <span className="verifying">
-                  <span className="dot-flash" />
-                  Verifying...
-                </span>
-              ) : 'Verify & Continue →'}
+            <button className="btn-verify" onClick={handleVerify} disabled={loading || otp.join('').length < 6}>
+              {loading ? <span className="verifying"><span className="dot-flash" />Verifying...</span> : 'Verify & Continue →'}
             </button>
-
             <div className="resend-row">
               {timer > 0 ? (
                 <p className="resend-timer">Resend OTP in <span>00:{String(timer).padStart(2, '0')}</span></p>
@@ -133,7 +106,6 @@ export default function OtpPage() {
                 <button className="resend-btn" onClick={handleResend}>↺ Resend OTP</button>
               )}
             </div>
-
             <p className="otp-note">🔒 This OTP expires in 60 seconds</p>
           </>
         ) : (

@@ -20,31 +20,19 @@ export default function RegisterPage() {
       const res = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          password: form.password,
-        }),
+        body: JSON.stringify(form),
       });
       const data = await res.json();
       if (!res.ok) {
-        const errorMsg =
-          typeof data.detail === 'string'
-            ? data.detail
-            : Array.isArray(data.detail)
-            ? data.detail.map((e) => e.msg).join(', ')
-            : 'Registration failed.';
-        setError(errorMsg);
-        setLoading(false);
+        setError(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
         return;
       }
       await fetch(`${API_URL}/api/auth/send-otp?phone=${form.email}`, {
         method: 'POST',
       });
       navigate('/verify-otp', { state: { email: form.email } });
-    } catch {
-      setError('Could not connect to server. Try again.');
+    } catch (err) {
+      setError('Cannot connect to server.');
     } finally {
       setLoading(false);
     }
@@ -67,17 +55,10 @@ export default function RegisterPage() {
           ].map(({ label, name, type, placeholder }) => (
             <div className="input-group" key={name}>
               <label>{label}</label>
-              <input
-                type={type}
-                name={name}
-                value={form[name]}
-                onChange={handleChange}
-                placeholder={placeholder}
-                required
-              />
+              <input type={type} name={name} value={form[name]} onChange={handleChange} placeholder={placeholder} required />
             </div>
           ))}
-          {error && <p style={{ color: 'red', fontSize: '13px' }}>{error}</p>}
+          {error && <p className="auth-error">⚠️ {error}</p>}
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Registering...' : 'Register →'}
           </button>

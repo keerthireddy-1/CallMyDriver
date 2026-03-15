@@ -34,10 +34,9 @@
 .auth-logo h1 {
   font-size: 1.8rem;
   font-weight: 900;
-  color: var(--cmd-blue);
+  color: var(--rapido-yellow);
   letter-spacing: -1px;
   font-family: 'Rajdhani', sans-serif;
-
 }
 
 .auth-subtitle {
@@ -74,9 +73,9 @@
 }
 
 .btn-primary {
-  background: #FFD600;
+  background:  #FFD600 ;
   color: #000000;
-  font-weight: 800;
+  font-weight: 00;
   font-size: 1rem;
   border: none;
   border-radius: 10px;
@@ -84,18 +83,13 @@
   cursor: pointer;
   margin-top: 6px;
   font-family: 'Inter', sans-serif;
-  transition: transform 0.15s, box-shadow 0.15s;
-  box-shadow: 0 4px 20px rgba(255, 214, 0, 0.35);
+  box-shadow: 0 0 20px rgba(255,214,0,0.5);
   width: 100%;
+  transition: transform 0.15s, opacity 0.15s;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 28px rgba(255, 214, 0, 0.5);
-}
-
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
+.btn-primary:hover { transform: scale(1.02); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .auth-switch {
   text-align: center;
