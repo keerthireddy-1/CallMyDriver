@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { register } from '../services/api';
 import '../styles/auth.css';
 
+const API_URL = 'http://127.0.0.1:8000';
+
 export default function RegisterPage() {
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -16,12 +17,21 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
     try {
-      await register(form.username, form.password);
-      // after register go to home directly (no OTP in backend yet)
-      localStorage.setItem('user_id', form.username);
-      navigate('/home');
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: form.email, password: form.password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.detail || 'Registration failed.');
+        setLoading(false);
+        return;
+      }
+      localStorage.setItem('user_id', form.email);
+      navigate('/verify-otp', { state: { phone: form.phone } });
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed. Try a different username.');
+      setError('Could not connect to server. Try again.');
     } finally {
       setLoading(false);
     }
@@ -37,33 +47,29 @@ export default function RegisterPage() {
         <p className="auth-subtitle">Join the ride.</p>
 
         <form onSubmit={handleSubmit} className="auth-form">
-          <div className="input-group">
-            <label>Username</label>
-            <input
-              type="text"
-              name="username"
-              value={form.username}
-              onChange={handleChange}
-              placeholder="choose a username"
-              required
-            />
-          </div>
-          <div className="input-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              required
-            />
-          </div>
+          {[
+            { label: 'Full Name',  name: 'name',     type: 'text',     placeholder: 'John Doe' },
+            { label: 'Email',      name: 'email',    type: 'email',    placeholder: 'you@email.com' },
+            { label: 'Phone',      name: 'phone',    type: 'tel',      placeholder: '+91 9999999999' },
+            { label: 'Password',   name: 'password', type: 'password', placeholder: '••••••••' },
+          ].map(({ label, name, type, placeholder }) => (
+            <div className="input-group" key={name}>
+              <label>{label}</label>
+              <input
+                type={type}
+                name={name}
+                value={form[name]}
+                onChange={handleChange}
+                placeholder={placeholder}
+                required
+              />
+            </div>
+          ))}
 
           {error && <p className="auth-error">⚠️ {error}</p>}
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Creating account...' : 'Register →'}
+            {loading ? 'Registering...' : 'Register →'}
           </button>
         </form>
 

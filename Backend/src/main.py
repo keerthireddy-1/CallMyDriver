@@ -1,3 +1,9 @@
+from src.controllers.auth_controller import register_user, login_user, send_otp, verify_otp
+from src.database import get_db, engine
+from src.models import Base
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from src.schemas import UserCreate
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -6,6 +12,9 @@ import uuid
 
 from src.sockets import manager
 from src.services.ai_engine import find_best_driver
+
+# Create tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="CallMyDriver - Backend Pro")
 
@@ -17,10 +26,6 @@ app.add_middleware(
 )
 
 # --- Pydantic Models ---
-class AuthData(BaseModel):
-    username: str
-    password: str
-
 class BookingRequest(BaseModel):
     user_id: str
     pickup_lat: float
@@ -29,17 +34,20 @@ class BookingRequest(BaseModel):
 
 # --- AUTH ENDPOINTS ---
 @app.post("/api/auth/register")
-async def register(data: AuthData):
-    if data.username in manager.users_db:
-        raise HTTPException(status_code=400, detail="Username taken")
-    manager.users_db[data.username] = data.password
-    return {"status": "success", "message": "Account created"}
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    return register_user(db, user)
 
 @app.post("/api/auth/login")
-async def login(data: AuthData):
-    if manager.users_db.get(data.username) != data.password:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    return {"status": "success", "user_id": data.username}
+def login(email: str, password: str, db: Session = Depends(get_db)):
+    return login_user(db, email, password)
+
+@app.post("/api/auth/send-otp")
+def otp_send(phone: str):
+    return send_otp(phone)
+
+@app.post("/api/auth/verify-otp")
+def otp_verify(phone: str, otp: str):
+    return verify_otp(phone, otp)
 
 # --- BOOKING ENDPOINTS ---
 @app.post("/api/bookings/book")
@@ -72,7 +80,7 @@ async def cancel_booking(booking_id: str):
     await manager.update_status(booking_id, "CANCELLED")
     return {"status": "success", "message": "Booking cancelled"}
 
-# --- RETAINED DRIVER/WEBSOCKET LOGIC ---
+# --- DRIVER/WEBSOCKET LOGIC ---
 @app.post("/api/auth/driver-login")
 async def driver_login(data: Dict[str, Any]):
     driver_id = f"DRV-{uuid.uuid4().hex[:4].upper()}"

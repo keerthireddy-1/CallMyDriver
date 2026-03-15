@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { login } from '../services/api';
 import '../styles/auth.css';
+
+const API_URL = 'http://127.0.0.1:8000';
 
 export default function LoginPage() {
   const [form, setForm] = useState({ username: '', password: '' });
@@ -16,12 +17,21 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await login(form.username, form.password);
-      // save user_id for later use
-      localStorage.setItem('user_id', res.data.user_id);
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: form.username, password: form.password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.detail || 'Login failed. Check your credentials.');
+        setLoading(false);
+        return;
+      }
+      localStorage.setItem('user_id', data.user_id);
       navigate('/home');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Check your credentials.');
+      setError('Could not connect to server. Try again.');
     } finally {
       setLoading(false);
     }
