@@ -10,30 +10,36 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_URL}/api/auth/login?email=${form.email}&password=${form.password}`, {
-        method: 'POST',
-      });
+      const res = await fetch(
+        `${API_URL}/api/auth/login?email=${encodeURIComponent(form.email)}&password=${encodeURIComponent(form.password)}`,
+        { method: 'POST' }
+      );
       const data = await res.json();
       if (!res.ok) {
-        setError(data.detail || 'Login failed.');
+        const errorMsg =
+          typeof data.detail === 'string'
+            ? data.detail
+            : Array.isArray(data.detail)
+            ? data.detail.map((e) => e.msg).join(', ')
+            : 'Login failed.';
+        setError(errorMsg);
         setLoading(false);
         return;
       }
-      await fetch(`${API_URL}/api/auth/send-otp?phone=${form.email}`, {
-        method: 'POST',
-      });
-      navigate('/verify-otp', { state: { email: form.email } });
-    } catch (err) {
-      setError('Cannot connect to server.');
+
+      // No OTP — go directly to home
+      localStorage.setItem('user_id', data.user_id);
+      navigate('/home');
+    } catch {
+      setError('Could not connect to server. Try again.');
+
     } finally {
       setLoading(false);
     }
@@ -56,7 +62,7 @@ export default function LoginPage() {
             <label>Password</label>
             <input type="password" name="password" value={form.password} onChange={handleChange} placeholder="••••••••" required />
           </div>
-          {error && <p style={{color:'red', fontSize:'13px'}}>{error}</p>}
+          {error && <p style={{ color: '#ff4444', fontSize: '13px', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Logging in...' : 'Login →'}
           </button>

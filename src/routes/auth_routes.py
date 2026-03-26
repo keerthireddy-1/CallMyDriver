@@ -11,7 +11,14 @@ router = APIRouter()
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     return auth_controller.register_user(db, user_data)
 
-# Note: OAuth2 expects form-data for login, not raw JSON
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     return auth_controller.login_user(db, form_data.username, form_data.password)
+
+@router.post("/send-otp")
+def send_otp(phone: str, db: Session = Depends(get_db)):
+    return auth_controller.send_otp(db, phone)
+
+@router.post("/verify-otp")
+def verify_otp(phone: str, otp: str, db: Session = Depends(get_db)):
+    return auth_controller.verify_otp(db, phone, otp)

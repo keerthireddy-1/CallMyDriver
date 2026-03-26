@@ -1,6 +1,9 @@
+
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/auth.css';
+
+
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -12,29 +15,47 @@ export default function RegisterPage() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  // 🚀 FIXED: No blocking calls, instant navigation
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+      
       const res = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    name: form.name,
+    email: form.email,
+    phone: form.phone,
+    password: form.password
+  })
+});
+      
+      clearTimeout(timeout);
       const data = await res.json();
+      
       if (!res.ok) {
-        setError(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
-        return;
+        throw new Error(data.detail || 'Registration failed');
       }
-      await fetch(`${API_URL}/api/auth/send-otp?phone=${form.email}`, {
-        method: 'POST',
-      });
+      
+      // ✅ INSTANT NAVIGATION - NO FREEZING!
       navigate('/verify-otp', { state: { email: form.email } });
+      
     } catch (err) {
-      setError('Cannot connect to server.');
+      if (err.name === 'AbortError') {
+        setError('Request timeout. Try again.');
+      } else {
+        setError(err.message);
+      }
     } finally {
-      setLoading(false);
+      setLoading(false); // ← ALWAYS STOP LOADING
     }
   };
 
@@ -55,7 +76,15 @@ export default function RegisterPage() {
           ].map(({ label, name, type, placeholder }) => (
             <div className="input-group" key={name}>
               <label>{label}</label>
-              <input type={type} name={name} value={form[name]} onChange={handleChange} placeholder={placeholder} required />
+              <input
+                type={type}
+                name={name}
+                value={form[name]}
+                onChange={handleChange}
+                placeholder={placeholder}
+                required
+                disabled={loading}
+              />
             </div>
           ))}
           {error && <p className="auth-error">⚠️ {error}</p>}

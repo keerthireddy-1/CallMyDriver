@@ -3,24 +3,18 @@ import random
 import json
 import os
 import smtplib
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from fastapi import FastAPI, WebSocket, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # --- MAIL CONFIGURATION ---
-MAIL_USERNAME = "Callmedriver.nesara@gmail.com"       # <-- your Gmail
-MAIL_PASSWORD = "vwotmeoqjugwxbtq"          # <-- 16-char app password NO SPACES
-MAIL_FROM = "Callmedriver.com"           # <-- same Gmail
+MAIL_USERNAME = "namithanammi27@gmail.com"
+MAIL_PASSWORD = "xpwzymtamiqerxmz"  # ← paste your NEW app password here
+MAIL_FROM = "namithanammi27@gmail.com"
 
 def send_email(to: str, otp: str):
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Your CallMyDriver OTP"
-    msg["From"] = MAIL_FROM
-    msg["To"] = to
-
-    html = f"""
+    msg = MIMEText(f"""
     <html>
       <body style="font-family: Arial, sans-serif; padding: 20px;">
         <h2 style="color: #333;">CallMyDriver - OTP Verification</h2>
@@ -31,8 +25,10 @@ def send_email(to: str, otp: str):
         </p>
       </body>
     </html>
-    """
-    msg.attach(MIMEText(html, "html"))
+    """, "html")
+    msg["Subject"] = "Your CallMyDriver OTP"
+    msg["From"] = MAIL_FROM
+    msg["To"] = to
 
     with smtplib.SMTP("smtp.gmail.com", 587) as server:
         server.starttls()
@@ -104,7 +100,7 @@ async def login(email: str = Query(...), password: str = Query(...)):
 
 @app.post("/api/auth/send-otp")
 async def send_otp(phone: str = Query(...)):
-    otp = str(random.randint(100000, 999999))  # 6-digit
+    otp = str(random.randint(100000, 999999))
     state.otp_store[phone] = otp
     try:
         print(f"Attempting to send OTP {otp} to {phone}...")

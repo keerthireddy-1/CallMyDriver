@@ -1,6 +1,31 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import '../styles/tracking.css';
+
+// Fix default marker icons for Leaflet in Vite
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+const carIcon = L.divIcon({
+  html: '🚗',
+  className: '',
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+});
+
+const pinIcon = L.divIcon({
+  html: '📍',
+  className: '',
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+});
 
 const STEPS = [
   'Finding a driver near you...',
@@ -13,10 +38,48 @@ const STEPS = [
 
 const stepsLength = STEPS.length;
 
+// Bengaluru default coords
+const PICKUP = [12.9716, 77.5946];
+const DESTINATION = [12.9352, 77.6245];
+
+// Animate car marker
+function MovingCar({ step }) {
+  const map = useMap();
+  const markerRef = useRef(null);
+
+  const getCarPos = (s) => {
+    const lat = PICKUP[0] + ((DESTINATION[0] - PICKUP[0]) * s) / (stepsLength - 1);
+    const lng = PICKUP[1] + ((DESTINATION[1] - PICKUP[1]) * s) / (stepsLength - 1);
+    return [lat, lng];
+  };
+
+  useEffect(() => {
+    const pos = getCarPos(step);
+    if (markerRef.current) {
+      markerRef.current.setLatLng(pos);
+      map.panTo(pos, { animate: true });
+    }
+  }, [step, map]);
+
+  return (
+    <Marker
+      position={getCarPos(0)}
+      icon={carIcon}
+      ref={markerRef}
+    >
+      <Popup>Driver is here</Popup>
+    </Marker>
+  );
+}
+
 export default function TrackingPage() {
   const [status, setStatus] = useState(0);
   const [lastUpdated, setLastUpdated] = useState('Just now');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const currentLocation = location.state?.currentLocation || 'Your Location';
+  const destination = location.state?.destination || 'Destination';
 
   useEffect(() => {
     if (status >= stepsLength - 1) return;
@@ -38,11 +101,30 @@ export default function TrackingPage() {
         <button className="cancel-btn" onClick={() => navigate('/home')}>✕</button>
       </div>
 
-      <div className="map-placeholder">
-        <div className="map-pulse" />
-        <span className="map-icon">🔑</span>
-        <p>Driver is on the way to your vehicle</p>
-        <small>(Live map — connect Google Maps API)</small>
+      {/* Leaflet Map */}
+      <div style={{ height: '250px', width: '100%', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px' }}>
+        <MapContainer
+          center={PICKUP}
+          zoom={13}
+          style={{ height: '100%', width: '100%' }}
+          zoomControl={false}
+          scrollWheelZoom={false}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="© OpenStreetMap contributors"
+          />
+          {/* Pickup marker */}
+          <Marker position={PICKUP} icon={pinIcon}>
+            <Popup>{currentLocation}</Popup>
+          </Marker>
+          {/* Destination marker */}
+          <Marker position={DESTINATION} icon={pinIcon}>
+            <Popup>{destination}</Popup>
+          </Marker>
+          {/* Moving car */}
+          <MovingCar step={status} />
+        </MapContainer>
       </div>
 
       <div className="tracking-card">
@@ -56,7 +138,7 @@ export default function TrackingPage() {
         </div>
 
         <div className="vehicle-reminder">
-          🚗 Your Car · KA 05 MN 7890
+          🚗 {currentLocation} → {destination}
         </div>
 
         <div className="status-timeline">

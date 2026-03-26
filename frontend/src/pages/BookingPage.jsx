@@ -18,10 +18,15 @@ export default function BookingPage() {
   const handleBook = () => {
     if (!currentLocation || !destination) return alert('Please enter your current location and destination!');
     setLoading(true);
-    // TODO: POST /book-driver
     setTimeout(() => {
       setLoading(false);
-      navigate('/track');
+      navigate('/track', {
+        state: {
+          currentLocation,
+          destination,
+          vehicle: selected,
+        },
+      });
     }, 1500);
   };
 
@@ -32,7 +37,6 @@ export default function BookingPage() {
         <h2>Call a Driver</h2>
       </div>
 
-      {/* Info banner */}
       <div className="info-banner">
         🔑 Our driver will come to <strong>your location</strong> and drive <strong>your vehicle</strong> to the destination.
       </div>
